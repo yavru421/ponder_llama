@@ -1,0 +1,32 @@
+{
+  "name": "researchforge",
+  "version": "1.0.0",
+  "description": "AI-Powered Research & Development Pipeline with Automated Quality Assurance",
+  "main": "tasks.py",
+  "scripts": {
+    "setup": "python tasks.py setup",
+    "test": "python tasks.py test",
+    "clean": "python tasks.py clean",
+    "pipeline": "python tasks.py pipeline",
+    "dev-install": "python tasks.py dev-install",
+    "gui": "powershell -ExecutionPolicy Bypass -File ponder_llama_gui.ps1",
+    "format": "black *.py && isort *.py",
+    "lint": "flake8 *.py --max-line-length=88",
+    "type-check": "mypy *.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yavru421/ponder_llama.git"
+  },
+  "keywords": [
+    "ai", "llm", "research", "automation", "stepforge", "pipeline", "llama"
+  ],
+  "author": "John Daniel Dondlinger",
+  "license": "MIT",
+  "devDependencies": {
+    "npm": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
