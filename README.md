@@ -1,3 +1,7 @@
+
+<img width="1024" height="1536" alt="ChatGPT Image Aug 17, 2025, 06_11_01 PM" src="https://github.com/user-attachments/assets/a990d530-5d51-46c0-add2-64d6c6fd1339" />
+
+
 # 🔬 ResearchForge
 
 > **AI-Powered Research & Development Pipeline with Automated Quality Assurance**
