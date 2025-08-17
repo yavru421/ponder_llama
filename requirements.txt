@@ -1,0 +1,7 @@
+# Core Dependencies for ResearchForge
+llama_api_client>=1.0.0
+requests>=2.28.0
+pytest>=7.0.0
+
+# Optional dependencies for enhanced functionality
+flake8>=6.0.0  # Code linting in five_action.py
