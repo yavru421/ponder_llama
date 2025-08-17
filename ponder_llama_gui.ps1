@@ -390,8 +390,47 @@ $buttonBrowseContext.Add_Click({
 
 # StepForge Pipeline Step Runners
 $buttonRunStep4.Add_Click({
-    $textBoxOutput.Text = "[STEPFORGE] Starting Step 4: Prompt Generation`n"
-    Run-PythonScript "four_promptgen.py" $textBoxOutput
+    $textBoxOutput.Text = "[STEPFORGE] Starting Step 4: Prompt Generation with GUI parameters`n"
+    
+    # Create parameters file for the script
+    $params = @"
+$($textBoxGoal.Text)
+$($textBoxNegatives.Text)
+$($textBoxTools.Text)
+$($textBoxSearchTerms.Text)
+$($textBoxContextFolder.Text)
+"@
+    
+    try {
+        # Write parameters to temp file and pipe to script
+        $params | Out-File -FilePath "temp_gui_params.txt" -Encoding UTF8
+        
+        $textBoxOutput.Text += "Parameters:`n- Goal: $($textBoxGoal.Text)`n- Negatives: $($textBoxNegatives.Text)`n- Tools: $($textBoxTools.Text)`n- Search Terms: $($textBoxSearchTerms.Text)`n`n"
+        $textBoxOutput.Refresh()
+        
+        $process = Start-Process -FilePath "python" -ArgumentList "four_promptgen.py" -Wait -PassThru -NoNewWindow -RedirectStandardInput "temp_gui_params.txt" -RedirectStandardOutput "temp_output.txt" -RedirectStandardError "temp_error.txt"
+        
+        # Read and display output
+        $output = ""
+        if (Test-Path "temp_output.txt") {
+            $output += Get-Content "temp_output.txt" -Raw
+            Remove-Item "temp_output.txt" -ErrorAction SilentlyContinue
+        }
+        if (Test-Path "temp_error.txt") {
+            $error = Get-Content "temp_error.txt" -Raw
+            if ($error) { $output += "`nError: $error" }
+            Remove-Item "temp_error.txt" -ErrorAction SilentlyContinue
+        }
+        Remove-Item "temp_gui_params.txt" -ErrorAction SilentlyContinue
+        
+        $textBoxOutput.Text += if ($process.ExitCode -eq 0) { "[SUCCESS] Step 4 completed successfully`n$output`n" } else { "[ERROR] Step 4 failed`n$output`n" }
+    }
+    catch {
+        $textBoxOutput.Text += "[ERROR] Exception in Step 4: $($_.Exception.Message)`n"
+    }
+    
+    $textBoxOutput.SelectionStart = $textBoxOutput.Text.Length
+    $textBoxOutput.ScrollToCaret()
 })
 
 $buttonRunStep3.Add_Click({
@@ -412,16 +451,58 @@ $buttonRunFullPipeline.Add_Click({
 
     $textBoxOutput.Text = "[STEPFORGE] Starting Full Pipeline`n"
     $textBoxOutput.Text += "Goal: $($textBoxGoal.Text)`n"
-    $textBoxOutput.Text += "========================================`n"
+    $textBoxOutput.Text += "========================================`n`n"
 
-    # Run StepForge pipeline in correct order
-    Run-PythonScript "four_promptgen.py" $textBoxOutput
-    Start-Sleep -Seconds 2
-    Run-PythonScript "3.py" $textBoxOutput
-    Start-Sleep -Seconds 2
-    Run-PythonScript "five_action.py" $textBoxOutput
+    # Step 4: Prompt Generation with GUI parameters
+    $textBoxOutput.Text += "[STEP 4] Generating prompt with GUI parameters...`n"
+    $textBoxOutput.Refresh()
     
-    $textBoxOutput.Text += "`n[STEPFORGE] Pipeline completed! Check output/ folder for results.`n"
+    $params = @"
+$($textBoxGoal.Text)
+$($textBoxNegatives.Text)
+$($textBoxTools.Text)
+$($textBoxSearchTerms.Text)
+$($textBoxContextFolder.Text)
+"@
+    
+    try {
+        $params | Out-File -FilePath "temp_gui_params.txt" -Encoding UTF8
+        $process = Start-Process -FilePath "python" -ArgumentList "four_promptgen.py" -Wait -PassThru -NoNewWindow -RedirectStandardInput "temp_gui_params.txt" -RedirectStandardOutput "temp_output.txt" -RedirectStandardError "temp_error.txt"
+        
+        if ($process.ExitCode -eq 0) {
+            $output = if (Test-Path "temp_output.txt") { Get-Content "temp_output.txt" -Raw } else { "" }
+            $textBoxOutput.Text += "[SUCCESS] Step 4 completed`n$output`n"
+        } else {
+            $error = if (Test-Path "temp_error.txt") { Get-Content "temp_error.txt" -Raw } else { "Unknown error" }
+            $textBoxOutput.Text += "[ERROR] Step 4 failed: $error`n"
+            return
+        }
+        
+        # Clean up temp files
+        Remove-Item "temp_gui_params.txt" -ErrorAction SilentlyContinue
+        Remove-Item "temp_output.txt" -ErrorAction SilentlyContinue
+        Remove-Item "temp_error.txt" -ErrorAction SilentlyContinue
+        
+        Start-Sleep -Seconds 2
+        $textBoxOutput.Refresh()
+        
+        # Step 3: AI Processing
+        $textBoxOutput.Text += "`n[STEP 3] Running AI processing...`n"
+        $textBoxOutput.Refresh()
+        Run-PythonScript "3.py" $textBoxOutput
+        
+        Start-Sleep -Seconds 2
+        
+        # Step 5: Action Plan Generation
+        $textBoxOutput.Text += "`n[STEP 5] Generating action plan...`n"
+        $textBoxOutput.Refresh()
+        Run-PythonScript "five_action.py" $textBoxOutput
+        
+        $textBoxOutput.Text += "`n[STEPFORGE] Pipeline completed! Check output/ folder for results.`n"
+    }
+    catch {
+        $textBoxOutput.Text += "[ERROR] Pipeline failed: $($_.Exception.Message)`n"
+    }
 })
 
 # File Manager Events
